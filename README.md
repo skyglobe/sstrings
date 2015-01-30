@@ -30,7 +30,7 @@ not mandatory.
 The recommended compiler is GCC 4 and the following line should output
 no warnings:
 
-    c99 -Wall -Wextra -pedantic sstrings.c -o sstrings
+    gcc --std=c99 -Wall -Wextra -pedantic sstrings.c -o sstrings
 
 The license is the MIT license and you can read it in `LICENSE`. It
 boils down to: do what you want with this as long as you give me credit
