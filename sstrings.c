@@ -24,6 +24,7 @@ THE SOFTWARE.
 #include <limits.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <getopt.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -48,7 +49,6 @@ static void printletters(void)
 {
     ssize_t i, j; /*Counters*/
     char buffer[BUFLEN];
-    char out_buffer[BUFLEN];
     ssize_t read_val;
     size_t n; /*Number of printable character read*/
     off_t base = (off_t)0, offset;
@@ -67,21 +67,21 @@ static void printletters(void)
                 n = (size_t)(j - i);
                 if (n >= n_chars)
                 {
-                    strncpy(out_buffer, &(buffer[i]), n);
-                    out_buffer[n < BUFLEN ? n : BUFLEN - 1] = '\0';
+                    size_t end = i + n;
+                    buffer[end < BUFLEN ? end : BUFLEN - 1] = '\0';
                     switch(oft)
                     {
                         case OCTAL:
-                            printf("%o %s\n", offset, out_buffer);
+                            printf("%o %s\n", (unsigned int)offset, buffer + i);
                             break;
                         case DECIMAL:
-                            printf("%d %s\n", offset, out_buffer);
+                            printf("%u %s\n", (unsigned int)offset, buffer + i);
                             break;
                         case HEXADECIMAL:
-                            printf("%x %s\n", offset, out_buffer);
+                            printf("%x %s\n", (unsigned int)offset, buffer + i);
                             break;
                         case NONE:
-                            puts(out_buffer);
+                            puts(buffer + i);
                             break;
                     }
                     i = j;
