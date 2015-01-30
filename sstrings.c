@@ -43,11 +43,14 @@ enum offsetformat {
 
 static size_t n_chars = 4; /*Minimum number of printable characters in a string*/
 static enum offsetformat oft = NONE; /* -t argument flag*/
+static size_t found_printable_chars = 0;
+static int found_printable = 0;
+static int printed_header = 0;
 
 /*Read the file content and search for strings*/
 static void printletters(void)
 {
-    ssize_t i, j; /*Counters*/
+    ssize_t i, j, k; /*Counters*/
     char buffer[BUFLEN];
     ssize_t read_val;
     size_t n; /*Number of printable character read*/
@@ -61,31 +64,65 @@ static void printletters(void)
             if(isprint(buffer[i]))
             {
                 offset = base + i;
-                while(isprint(buffer[j]) && (size_t)j < BUFLEN)
-                    j++;
-
-                n = (size_t)(j - i);
-                if (n >= n_chars)
+                while (isprint(buffer[j]) && (size_t)j < BUFLEN)
                 {
-                    size_t end = i + n;
-                    buffer[end < BUFLEN ? end : BUFLEN - 1] = '\0';
-                    switch(oft)
+                    n = (j - i) + found_printable_chars;
+                    if (n >= n_chars)
                     {
-                        case OCTAL:
-                            printf("%o %s\n", (unsigned int)offset, buffer + i);
-                            break;
-                        case DECIMAL:
-                            printf("%u %s\n", (unsigned int)offset, buffer + i);
-                            break;
-                        case HEXADECIMAL:
-                            printf("%x %s\n", (unsigned int)offset, buffer + i);
-                            break;
-                        case NONE:
-                            puts(buffer + i);
-                            break;
+                        /*The string is long enough*/
+                        found_printable = 1;
+                        if (!printed_header)
+                        {
+                            /*Print header*/
+                            switch(oft)
+                            {
+                                case NONE: /*No header to print, skip*/
+                                    break;
+                                case OCTAL:
+                                    printf("%o ", (unsigned int)offset);
+                                    break;
+                                case DECIMAL:
+                                    printf("%u ", (unsigned int)offset);
+                                    break;
+                                case HEXADECIMAL:
+                                    printf("%x ", (unsigned int)offset);
+                                    break;
+                            }
+
+                            printed_header = 1;
+
+                            /*Print the characters*/
+                            k = 0;
+                            while(n)
+                            {
+                                fputc((int)buffer[i+k], stdout);
+                                k++;
+                                n--;
+                            }
+                        }
                     }
-                    i = j;
+
+                    if(found_printable)
+                    {
+                        fputc((int)buffer[j], stdout);
+                    }
+                    found_printable_chars++;
+                    j++;
                 }
+
+                if((size_t)j < BUFLEN - 1) /*Found the end of a short printable string*/
+                {
+                    fputc('\n', stdout);
+                }
+
+                i = j;
+
+            }
+            else
+            {
+                found_printable = 0;
+                found_printable_chars = 0;
+                printed_header = 0;
             }
         }
         base += read_val;
