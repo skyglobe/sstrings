@@ -1,6 +1,6 @@
 # sstrings: a strings(1) replacement
 
-After reading that GNU binutils' strings(1) utility is affected by a
+After reading that GNU binutils' strings(1) utility was affected by a
 buffer overflow vulnerability and finding out that a simple tool like
 that is more complex than it should be (at least in my opinion) I
 decided to brush up my C skills on UNIX-like systems and to write
