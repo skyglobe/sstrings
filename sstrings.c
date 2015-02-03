@@ -135,7 +135,16 @@ int main(int argc, char *argv[])
                         fprintf(stderr, "Invalid argument for -n: '%s'\n", optarg);
                         exit(2);
                     }
-                    n_chars = (size_t) t;
+
+                    if(t < BUFLEN)
+                    {
+                        n_chars = (size_t) t;
+                    }
+                    else
+                    {
+                        fprintf(stderr, "-n argument is too much: %lu\n", t);
+                        exit(2);
+                    }
                 }
                 break;
             case 't':
