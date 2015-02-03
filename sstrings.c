@@ -32,7 +32,7 @@ THE SOFTWARE.
 #include <sys/stat.h>
 #include <fcntl.h>
 
-static const size_t BUFLEN = 4096;
+#define BUFLEN 4096
 
 enum offsetformat {
     NONE,
@@ -42,87 +42,72 @@ enum offsetformat {
 };
 
 static size_t n_chars = 4; /*Minimum number of printable characters in a string*/
+static size_t saved_chars = 0;
 static enum offsetformat oft = NONE; /* -t argument flag*/
-static size_t found_printable_chars = 0;
-static int found_printable = 0;
-static int printed_header = 0;
+static char out_buffer[BUFLEN] = {'\0'};
+int print_header = 1;
+
+static void printletters(unsigned int offset)
+{
+    switch(oft)
+    {
+        case OCTAL:
+            printf("%o %s", offset, out_buffer);
+            break;
+        case DECIMAL:
+            printf("%u %s", offset, out_buffer);
+            break;
+        case HEXADECIMAL:
+            printf("%x %s", offset, out_buffer);
+            break;
+        case NONE:
+            printf("%s", out_buffer);
+            break;
+    }
+
+}
 
 /*Read the file content and search for strings*/
-static void printletters(void)
+static void searchletters(void)
 {
-    ssize_t i, j, k; /*Counters*/
     char buffer[BUFLEN];
+    ssize_t i; /*Counter*/
     ssize_t read_val;
-    size_t n; /*Number of printable character read*/
-    off_t base = (off_t)0, offset;
+    off_t base = (off_t)0;
 
     while((read_val = read(STDIN_FILENO, buffer, BUFLEN)) > 0)
     {
         for (i = 0; i < read_val; i++)
         {
-            j = i;
             if(isprint(buffer[i]))
             {
-                offset = base + i;
-                while (isprint(buffer[j]) && (size_t)j < BUFLEN)
+                if(saved_chars < n_chars)
                 {
-                    n = (j - i) + found_printable_chars;
-                    if (n >= n_chars)
-                    {
-                        /*The string is long enough*/
-                        found_printable = 1;
-                        if (!printed_header)
-                        {
-                            /*Print header*/
-                            switch(oft)
-                            {
-                                case NONE: /*No header to print, skip*/
-                                    break;
-                                case OCTAL:
-                                    printf("%o ", (unsigned int)offset);
-                                    break;
-                                case DECIMAL:
-                                    printf("%u ", (unsigned int)offset);
-                                    break;
-                                case HEXADECIMAL:
-                                    printf("%x ", (unsigned int)offset);
-                                    break;
-                            }
-
-                            printed_header = 1;
-
-                            /*Print the characters*/
-                            k = 0;
-                            while(n)
-                            {
-                                fputc((int)buffer[i+k], stdout);
-                                k++;
-                                n--;
-                            }
-                        }
-                    }
-
-                    if(found_printable)
-                    {
-                        fputc((int)buffer[j], stdout);
-                    }
-                    found_printable_chars++;
-                    j++;
+                    out_buffer[saved_chars] = buffer[i];
+                    saved_chars++;
                 }
-
-                if((size_t)j < BUFLEN - 1) /*Found the end of a short printable string*/
+                else
                 {
-                    fputc('\n', stdout);
+                    if(print_header)
+                    {
+                        out_buffer[saved_chars] = buffer[i];
+                        out_buffer[saved_chars + 1] = '\0';
+                        printletters(base + i);
+                        print_header = 0;
+                    }
+                    else
+                    {
+                        fputc(buffer[i], stdout);
+                    }
                 }
-
-                i = j;
-
             }
             else
             {
-                found_printable = 0;
-                found_printable_chars = 0;
-                printed_header = 0;
+                if(!print_header && saved_chars >= n_chars)
+                    fputc('\n', stdout);
+
+                saved_chars = 0;
+                print_header = 1;
             }
         }
         base += read_val;
@@ -212,7 +197,7 @@ int main(int argc, char *argv[])
                 exit(5);
             }
 
-            printletters();
+            searchletters();
 
             argc--;
             argv++;
@@ -221,7 +206,7 @@ int main(int argc, char *argv[])
     else
     {
         /*Process stdin*/
-        printletters();
+        searchletters();
     }
 
     return 0;
