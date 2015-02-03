@@ -73,38 +73,43 @@ static void searchletters(void)
     char buffer[BUFLEN];
     ssize_t i; /*Counter*/
     ssize_t read_val;
-    off_t base = (off_t)0;
+    off_t base = (off_t)0, offset;
+    int newline;
 
     while((read_val = read(STDIN_FILENO, buffer, BUFLEN)) > 0)
     {
+        newline = 0;
+
         for (i = 0; i < read_val; i++)
         {
             if(isprint(buffer[i]))
             {
+                if(saved_chars == 0)
+                    offset = base + (off_t)i;
+
                 if(saved_chars < n_chars)
                 {
                     out_buffer[saved_chars] = buffer[i];
                     saved_chars++;
+                    if(saved_chars == n_chars)
+                    {
+                        out_buffer[saved_chars + 1] = '\0';
+                        printletters(offset);
+                        print_header = 0;
+                    }
                 }
                 else
                 {
-                    if(print_header)
-                    {
-                        out_buffer[saved_chars] = buffer[i];
-                        out_buffer[saved_chars + 1] = '\0';
-                        printletters(base + i);
-                        print_header = 0;
-                    }
-                    else
-                    {
-                        fputc(buffer[i], stdout);
-                    }
+                    fputc(buffer[i], stdout);
                 }
             }
             else
             {
                 if(!print_header && saved_chars >= n_chars)
+                {
                     fputc('\n', stdout);
+                    newline = 1;
+                }
 
                 saved_chars = 0;
                 print_header = 1;
@@ -112,6 +117,9 @@ static void searchletters(void)
         }
         base += read_val;
     }
+
+    if(!newline)
+        fputc('\n', stdout);
 }
 
 int main(int argc, char *argv[])
