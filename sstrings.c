@@ -42,10 +42,8 @@ enum offsetformat {
 };
 
 static size_t n_chars = 4; /*Minimum number of printable characters in a string*/
-static size_t saved_chars = 0;
 static enum offsetformat oft = NONE; /* -t argument flag*/
 static char out_buffer[BUFLEN] = {'\0'};
-int print_header = 1;
 
 static void printletters(unsigned int offset)
 {
@@ -75,6 +73,8 @@ static void searchletters(void)
     ssize_t read_val;
     off_t base = (off_t)0, offset;
     int newline;
+    size_t saved_chars = 0;
+    int print_header = 1;
 
     while((read_val = read(STDIN_FILENO, buffer, BUFLEN)) > 0)
     {
