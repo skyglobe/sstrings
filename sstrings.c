@@ -195,9 +195,10 @@ int main(int argc, char *argv[])
 
     if(argc > 0)
     {
-        int retval;
         while(argc)
         {
+            int retval;
+
             /*Close stdin*/
             retval = close(STDIN_FILENO);
             if(retval) /*Unable to close the file*/
